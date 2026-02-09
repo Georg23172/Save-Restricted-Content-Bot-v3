@@ -3,12 +3,29 @@
 # See LICENSE file in the repository root for full license text.
 
 import asyncio
-from shared_client import start_client
 import importlib
 import os
 import sys
+import threading
 
+from shared_client import start_client
+from pyrogram import idle
 
+# ----------------- Dummy Web Server للحفاظ على Railway حي -----------------
+from flask import Flask
+web_app = Flask("dummy")
+
+@web_app.route("/")
+def home():
+    return "Bot is running!"
+
+def run_flask():
+    web_app.run(host="0.0.0.0", port=5000)
+
+# تشغيل السيرفر في Thread مستقل
+threading.Thread(target=run_flask).start()
+
+# ----------------- تشغيل البوت -----------------
 async def load_and_run_plugins():
     await start_client()
     plugin_dir = "plugins"
@@ -20,7 +37,6 @@ async def load_and_run_plugins():
             print(f"Running {plugin} plugin...")
             await getattr(module, f"run_{plugin}_plugin")()
 
-
 async def main():
     print("Starting clients ...")
     await load_and_run_plugins()
@@ -28,7 +44,6 @@ async def main():
     # إبقاء البوت يعمل
     while True:
         await asyncio.sleep(3600)
-
 
 if __name__ == "__main__":
     try:
